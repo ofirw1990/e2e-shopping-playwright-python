@@ -1,0 +1,25 @@
+{
+  "test_scenarios": [
+    {
+      "test_name": "search_shoes_under_budget",
+      "search_query": "shoes",
+      "max_price": 220,
+      "items_limit": 5,
+      "description": "Search for shoes under $220 and add to cart"
+    },
+    {
+      "test_name": "search_laptop_under_budget",
+      "search_query": "laptop",
+      "max_price": 500,
+      "items_limit": 3,
+      "description": "Search for laptops under $500 and add to cart"
+    },
+    {
+      "test_name": "search_headphones_under_budget",
+      "search_query": "headphones",
+      "max_price": 100,
+      "items_limit": 5,
+      "description": "Search for headphones under $100 and add to cart"
+    }
+  ]
+}

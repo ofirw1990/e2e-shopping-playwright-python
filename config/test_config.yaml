@@ -1,0 +1,23 @@
+# Test Configuration
+browser:
+  type: "chromium"  # chromium, firefox, webkit
+  headless: false
+  slow_mo: 100  # milliseconds delay for demo purposes
+  
+timeout:
+  default: 30000
+  navigation: 30000
+  
+screenshots:
+  enabled: true
+  path: "screenshots"
+  on_failure: true
+  
+ebay:
+  base_url: "https://www.ebay.com"
+  search_timeout: 10000
+  cart_url: "https://www.ebay.com/sh/sc"
+  
+test_settings:
+  max_retries: 2
+  screenshot_on_step: true
