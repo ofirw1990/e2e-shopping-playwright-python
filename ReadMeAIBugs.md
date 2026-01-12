@@ -1,71 +1,95 @@
-# AI Code Review – Bug Analysis
+Bug 1 – Mixing Playwright and Selenium in the same test
 
-This document describes issues found during a static review of AI-generated test automation code. The code was not executed – the review is based on reading and understanding the logic only.
+Problem description:
+The code imports Selenium but does not use it:
 
+from selenium import webdriver
 
-## Bug 1 – Using time.sleep for waits
+At the same time, the test is written using Playwright. Mixing different automation frameworks in the same test is unnecessary and confusing.
 
-**Problem Description:**  
-The code uses `time.sleep()` in order to wait for the page to load or for elements to appear. This is a problem because fixed sleep times are not connected to the actual state of the UI. If the page loads slower, the test may fail. If the page loads faster, the test wastes time. This often causes flaky and unstable tests.
+Why this is a problem:
 
-**Problematic code:**
-```python
-import time
-time.sleep(5)
-```
+It adds an unused dependency
 
-**Suggested fix:**  
-Instead of sleeping, wait for a real UI condition using Playwright:
+It makes the code harder to understand and maintain
 
-```python
-page.wait_for_selector("//div[contains(@class,'search-result')]")
-```
+It suggests unclear architectural decisions
 
+Suggested fix:
+Remove the Selenium import and use Playwright only:
 
-## Bug 2 – Comparing prices as strings instead of numbers
+Remove:
+from selenium import webdriver
 
-**Problem Description:**  
-The AI-generated code extracts prices as text and compares them directly to a numeric limit. This is a problem because string comparison is not numeric. For example, "100" can be considered smaller than "20" when compared as strings. This can cause wrong filtering and incorrect test results.
+Bug 2 – Incorrect usage of Playwright sync context
 
-**Problematic code:**
-```python
-price = price_text.replace("$", "")
-if price <= max_price:
-    results.append(item)
-```
+Problem description:
+The code starts Playwright using:
 
-**Suggested fix:**  
-Convert the price value to a number before comparing:
+browser = sync_playwright().start().chromium.launch()
 
-```python
-price = float(price_text.replace("$", "").strip())
-if price <= max_price:
-    results.append(item)
-```
+However, Playwright’s synchronous API should be used with a context manager (with sync_playwright() as p:).
+Without it, Playwright resources may not be properly managed or closed.
 
+Why this is a problem:
 
-## Bug 3 – No handling of pagination in search results
+Can cause resource leaks
 
-**Problem Description:**  
-The search logic assumes that all relevant items are found on the first results page. This is a problem because e-commerce sites usually split results across multiple pages. If there are fewer items on the first page, the function may return fewer results than expected. This does not meet the requirement to collect up to the requested number of items.
+Is not aligned with Playwright best practices
 
-**Problematic code:**
-```python
-items = page.locator("//div[@class='item']").all()
-return items[:limit]
-```
+Makes the test less stable and harder to extend
 
-**Suggested fix:**  
-Add logic to move to the next page and continue collecting items until the limit is reached or no more pages are available:
+Suggested fix:
+Use the proper Playwright context pattern:
 
-```python
-while len(results) < limit and page.locator("//a[text()='Next']").is_visible():
-    page.click("//a[text()='Next']")
-    page.wait_for_load_state("networkidle")
-    # continue collecting items from the next page
-```
+with sync_playwright() as p:
+  browser = p.chromium.launch()
 
+Bug 3 – Using time.sleep instead of Playwright waits
 
-## Summary
+Problem description:
+The code uses fixed sleep calls to wait for page load and results:
 
-The issues above are common in AI-generated automation code. They usually relate to synchronization, data handling, and missing edge cases. By applying basic automation best practices, these problems can be avoided and the tests can become more stable and maintainable.
+time.sleep(2)
+time.sleep(3)
+
+Why this is a problem:
+
+Sleep times are not connected to the real UI state
+
+Tests may fail on slow environments
+
+Tests waste time on fast environments
+
+This leads to flaky tests
+
+Suggested fix:
+Replace sleep calls with Playwright waits based on UI conditions:
+
+page.wait_for_selector(".result-item")
+
+Bug 4 – No validation or assertion on search results
+
+Problem description:
+The test locates search results:
+
+results = page.locator(".result-item")
+
+But no assertion or validation is performed on the results.
+
+Why this is a problem:
+
+The test does not actually verify any behavior
+
+It can pass even if search results are empty or incorrect
+
+This reduces the test’s value as an automated test
+
+Suggested fix:
+Add an assertion, for example checking that at least one result exists:
+
+assert results.count() > 0
+
+Summary
+
+The main issues in this AI-generated code are unused dependencies, incorrect Playwright usage, poor synchronization handling, and missing assertions. These are common problems in AI-written automation code. By cleaning unused imports, following Playwright best practices, replacing sleep calls with proper waits, and adding assertions, the test becomes more reliable, readable, and meaningful.
